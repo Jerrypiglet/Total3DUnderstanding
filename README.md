@@ -8,6 +8,10 @@ In [CVPR, 2020](http://cvpr2020.thecvf.com/).
 <img src="demo/inputs/2/img.jpg" alt="img.jpg" width="20%" /> <img src="demo/outputs/2/3dbbox.png" alt="3dbbox.png" width="20%" /> <img src="demo/outputs/2/recon.png" alt="recon.png" width="20%" />
 
 ---
+### Update from Rui
+
+- removed version requirements from requirements.txt
+- If seeing errors compiling chamfer distance module, try: export PATH=/usr/local/cuda/bin:/usr/local/cuda/nsight-compute-2019.4.0/${PATH:+:${PATH}}
 
 ### Install
 This implementation uses Python 3.6, [Pytorch1.1.0](http://pytorch.org/), cudatoolkit 9.0. We recommend to use [conda](https://docs.conda.io/en/latest/miniconda.html) to deploy the environment.

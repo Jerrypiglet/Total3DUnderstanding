@@ -28,6 +28,7 @@ class Tester(BaseTester, Trainer):
             dist1, dist2 = dist_chamfer(data['mesh_points'][index].unsqueeze(0), current_coordinates.unsqueeze(0))[:2]
             cls_id = data['cls'][index].nonzero()[0][0].item()
             chamfer_values.append(((torch.mean(dist1)) + (torch.mean(dist2))).item())
+            # chamfer_values.append(0.)
             if self.cfg.config['log']['save_results']:
                 file_path = os.path.join(self.cfg.config['log']['vis_path'], '%s_%s.obj' % (data['sequence_id'][index].item(), cls_id))
 
