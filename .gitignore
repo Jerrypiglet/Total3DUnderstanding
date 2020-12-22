@@ -1,3 +1,5 @@
 out
 *.pyc
+data/sunrgbd/sunrgbd_train_test_data/
 data/sunrgbd/Dataset
+.ipynb_checkpoints

@@ -306,31 +306,32 @@ if __name__ == '__main__':
     if not os.path.exists(sunrgbd_config.obj_avg_size_file) or not os.path.exists(sunrgbd_config.layout_avg_file):
         write_avg_data(sunrgbd_config)
 
-    gt_config = Config('sunrgbd')
-    # load average size priors
-    metadata = dict()
-    with open(sunrgbd_config.obj_avg_size_file, 'rb') as file:
-        size_avg_category = pickle.load(file)
-    metadata['size_avg_category'] = size_avg_category
+    # gt_config = Config('sunrgbd')
+    # # load average size priors
+    # metadata = dict()
+    # with open(sunrgbd_config.obj_avg_size_file, 'rb') as file:
+    #     size_avg_category = pickle.load(file)
+    # metadata['size_avg_category'] = size_avg_category
 
-    train_path_list_no_flip, test_path_list_no_flip = preprocess(sunrgbd_config, gt_config, metadata, iou_threshold=0.1, flip=False)
-    # flip training set
-    train_path_list_flip, test_path_list_flip = preprocess(sunrgbd_config, gt_config, metadata, iou_threshold=0.1, flip=True, data_range=range(5050, 10335))
+    # train_path_list_no_flip, test_path_list_no_flip = preprocess(sunrgbd_config, gt_config, metadata, iou_threshold=0.1, flip=False)
+    # # flip training set
+    # train_path_list_flip, test_path_list_flip = preprocess(sunrgbd_config, gt_config, metadata, iou_threshold=0.1, flip=True, data_range=range(5050, 10335))
 
-    # save training path and testing path
-    train_path_list = train_path_list_no_flip + train_path_list_flip
-    with open(os.path.join(gt_config.metadata_path, 'preprocessed', 'train.json'), 'w') as f:
-        json.dump(train_path_list, f)
+    # # save training path and testing path
+    # train_path_list = train_path_list_no_flip + train_path_list_flip
+    # with open(os.path.join(gt_config.metadata_path, 'preprocessed', 'train.json'), 'w') as f:
+    #     json.dump(train_path_list, f)
 
-    test_path_list = test_path_list_no_flip + test_path_list_flip
-    with open(os.path.join(gt_config.metadata_path, 'preprocessed', 'test.json'), 'w') as f:
-        json.dump(test_path_list, f)
+    # test_path_list = test_path_list_no_flip + test_path_list_flip
+    # with open(os.path.join(gt_config.metadata_path, 'preprocessed', 'test.json'), 'w') as f:
+    #     json.dump(test_path_list, f)
 
     # visualize SUNRGBD samples
     sequence = readsunrgbdframe(sunrgbd_config, image_id=274)
     scene = Scene3D_SUNRGBD(sequence)
-    # scene.draw_image()
-    # scene.draw_cls()
-    # scene.draw_inst()
+    scene.draw_image()
+    scene.draw_2dboxes()
+    scene.draw_cls()
+    scene.draw_inst()
     scene.draw_projected_bdb3d()
-    scene.draw3D()
+    # scene.draw3D()

@@ -99,7 +99,7 @@ class Scene3D_SUNRGBD(Scene3D):
     def bdb3d(self):
         return self.__bdb3d
 
-    def draw_projected_bdb3d(self):
+    def draw_projected_bdb3d(self, return_plt=False):
         from PIL import Image, ImageDraw, ImageFont
 
         img_map = Image.fromarray(self.img_map[:])
@@ -134,14 +134,86 @@ class Scene3D_SUNRGBD(Scene3D):
             draw.text(tuple(center_from_3D), NYU40CLASSES[bdb3d['class_id']],
                       fill=(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)), font=ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf", 20))
 
-        img_map.show()
+        if return_plt:
+            print("[draw_projected_bdb3d] Returned.")
+            return img_map
+        else:
+            img_map.show()
+            print("[draw_projected_bdb3d] Shown.")
 
-    def draw_image(self):
+    def draw_projected_layoutbdb3d(self, return_plt=False, fix_polygon=True):
+        from PIL import Image, ImageDraw, ImageFont
+
+        img_map = Image.fromarray(self.img_map[:])
+
+        draw = ImageDraw.Draw(img_map)
+
+        width = 5
+
+        bdb3d = self.layout
+
+        center_from_3D, invalid_ids = proj_from_point_to_2d(bdb3d['centroid'], self.cam_K, self.cam_R)
+        bdb3d_corners = get_corners_of_bb3d_no_index(bdb3d['basis'], bdb3d['coeffs'], bdb3d['centroid'])
+        bdb2D_from_3D = proj_from_point_to_2d(bdb3d_corners, self.cam_K, self.cam_R)[0]
+
+        # bdb2D_from_3D = np.round(bdb2D_from_3D).astype('int32')
+        bdb2D_from_3D = [tuple(item) for item in bdb2D_from_3D]
+
+        # color = nyu_color_palette[bdb3d['class_id']]
+        color = [1, 0, 0]
+        # print(bdb2D_from_3D)
+        # bdb2D_from_3D = [(x[0], x[1]) if x[0] > ]
+        
+        W, H = img_map.size
+        line_width = width
+
+        from utils.utils_rui import clip
+        def clip2rec(polygon, fix_polygon=fix_polygon):
+            if not fix_polygon:
+                return polygon
+            if all_outside_rect(polygon, W, H):
+                return []
+            rectangle = [(-line_width, -line_width), (W+line_width, -line_width), (W+line_width, H+line_width), (-line_width, H+line_width)]
+            return clip(polygon, rectangle)
+
+        def all_outside_rect(polygon, W, H):
+            if all([x[0] < 0 or x[0] >= W or x[1] < 0 or x[1] >= H for x in polygon]):
+                return True
+            else:
+                return False
+
+        draw.line(clip2rec([bdb2D_from_3D[0], bdb2D_from_3D[1], bdb2D_from_3D[2], bdb2D_from_3D[3], bdb2D_from_3D[0]]),
+                    fill=(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)), width=width)
+        draw.line(clip2rec([bdb2D_from_3D[4], bdb2D_from_3D[5], bdb2D_from_3D[6], bdb2D_from_3D[7], bdb2D_from_3D[4]]),
+                    fill=(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)), width=width)
+        draw.line(clip2rec([bdb2D_from_3D[0], bdb2D_from_3D[4]]),
+                    fill=(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)), width=width)
+        draw.line(clip2rec([bdb2D_from_3D[1], bdb2D_from_3D[5]]),
+                    fill=(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)), width=width)
+        draw.line(clip2rec([bdb2D_from_3D[2], bdb2D_from_3D[6]]),
+                    fill=(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)), width=width)
+        draw.line(clip2rec([bdb2D_from_3D[3], bdb2D_from_3D[7]]),
+                    fill=(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)), width=width)
+
+        if return_plt:
+            print("[draw_projected_layoutbdb3d] Returned.")
+            return img_map, bdb2D_from_3D
+        else:
+            img_map.show()
+            print("[draw_projected_layoutbdb3d] Shown.")
+
+
+    def draw_image(self, if_show=True):
+        plt.ion()
         plt.imshow(self.img_map)
+        plt.draw()
         plt.axis('off')
-        plt.show()
+        if if_show:
+            plt.show()
+            plt.pause(0.001)
+            input("[draw_image] Press [enter] to continue.")
 
-    def draw_cls(self):
+    def draw_cls(self, if_show=True):
         class_ids = np.unique(self.cls_map)
         color_box = []
 
@@ -151,6 +223,7 @@ class Scene3D_SUNRGBD(Scene3D):
             color_map[self.cls_map == class_id] = color_id
 
         plt.figure()
+        plt.ion()
         ax = plt.gca()
         im = ax.imshow(color_map, cmap=ListedColormap(color_box))
         colorbar = plt.colorbar(im)
@@ -159,12 +232,17 @@ class Scene3D_SUNRGBD(Scene3D):
         colorbar.set_ticklabels([NYU40CLASSES[id] for id in np.unique(self.cls_map)])
         plt.axis('equal')
         plt.axis('off')
-        plt.show()
+        plt.draw()
+        if if_show:
+            plt.show()
+            plt.pause(0.001)
+            input("[draw_cls] Press [enter] to continue.")
 
-    def draw_inst(self):
+    def draw_inst(self, if_show=True):
         image = np.copy(self.img_map)
 
         plt.cla()
+        plt.ion()
 
         for inst_id, class_id in self.inst_classes.items():
             mask = self.inst_map==inst_id
@@ -182,10 +260,15 @@ class Scene3D_SUNRGBD(Scene3D):
 
         plt.axis("off")
         plt.imshow(image)
-        plt.show()
+        plt.draw()
+        if if_show:
+            plt.show()
+            plt.pause(0.001)
+            input("[draw_inst] Press [enter] to continue.")
 
-    def draw_2dboxes(self, scale=1.0):
+    def draw_2dboxes(self, scale=1.0, if_show=True):
         plt.cla()
+        plt.ion()
         plt.axis('off')
         plt.imshow(self.img_map)
         for bdb in self.bdb2d:
@@ -196,7 +279,11 @@ class Scene3D_SUNRGBD(Scene3D):
             plt.gca().add_patch(rect)
             plt.gca().text(bbox[0], bbox[1], '{:s}'.format(NYU40CLASSES[bdb['class_id']]), bbox=dict(facecolor=color, alpha=0.5),
                            fontsize=9, color='white')
-        plt.show()
+        plt.draw()
+        if if_show:
+            plt.show()
+            plt.pause(0.001)
+            input("[draw_2dboxes] Press [enter] to continue.")
 
     def set_render(self):
         renderer = vtk.vtkRenderer()

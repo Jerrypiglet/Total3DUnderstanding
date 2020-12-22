@@ -20,7 +20,7 @@ def get_cam_KRT(cam_paras, im_size):
 
     A point [x, y, z] in world coordinate system can be transformed to the camera system by:
     [x, y, z].dot(R)
-    :param cam_paras: camera parameters with SUNCG form.
+    :param cam_paras: camera parameters with SUNCG form: [ori_pnt[0], ori_pnt[1], ori_pnt[2], x[0], x[1], x[2], y[0], y[1], y[2], fov_x, fov_y]
     :param im_size: [width, height] of an image.
     :return: R, ori_pnt
     '''
@@ -188,7 +188,9 @@ def read_seg2d_data(seg2d_path):
     try:
         with open(seg2d_path, encoding='utf-8') as data_file:
             seg2d_data = json.load(data_file)
+            # print(seg2d_path)
     except Exception as err:
+        print('==== Error with '+seg2d_path, err)
         with open(seg2d_path, 'r') as data_file:
             content = data_file.readlines()[0]
         if "\\" in content:
@@ -196,7 +198,10 @@ def read_seg2d_data(seg2d_path):
         else:
             error_string = content[err.pos - 1:err.pos + 7]
         content = content.replace(error_string, "")
-        seg2d_data = json.loads(content)
+        try:
+            seg2d_data = json.loads(content)
+        except json.decoder.JSONDecodeError:
+            print('Error loading json file %s!'%content)
 
     number_of_anot = len(seg2d_data["frames"][0]["polygon"])
 
@@ -234,8 +239,10 @@ class SUNRGBDData(object):
     def __init__(self, K, R_ex, R_tilt, bdb2d, bdb3d, gt3dcorner, imgdepth, imgrgb, seg2d, semantic_seg2d, manhattan_layout,
                  sequence_name, sequence_id, scene_type):
         self._K = K
+
         # R_ex.T is the left-hand camera coordinates -> world coordinates transformation P_world = R_ex*P_camera
         self._R_ex = R_ex
+        
         # R_tilt is the right-hand camera coordinates  -> world coordinates transformation P_world = R_tilt*P_camera(after transformed to x, z, -y)
         self._R_tilt = R_tilt
         self._bdb2d = bdb2d
@@ -252,7 +259,7 @@ class SUNRGBDData(object):
         self._scene_type = scene_type
 
     def __str__(self):
-        return 'sequence_name: {}, sequence_id: {}'.format(self._sequence_name, self._sequence_id)
+        return '[SUNRGBDData] sequence_name: {}, sequence_id: {}'.format(self._sequence_name, self._sequence_id)
 
     def __repr__(self):
         return self.__str__()
@@ -328,8 +335,10 @@ def readsunrgbdframe(config, image_name=None, image_id=None):
     f.close()
     if image_name:
         image_id = image_list.index(image_name) + 1
-    with open(os.path.join(clean_data_path, 'data_all', str(image_id) + '.pkl'), 'rb') as f:
-        img_info = pickle.load(f)
+    pickle_path = os.path.join(clean_data_path, 'data_all', str(image_id) + '.pickle')
+    with open(pickle_path, 'rb') as f:
+        img_info = pickle.load(f, encoding='latin1')
+        # print(img_info.keys()) # dict_keys(['bdb2d', 'R_ex', 'seg2d_path', 'bdb3d', 'sequence_name', 'gt3dcorner', 'R_tilt', 'imgdepth_path', 'sensor', 'K', 'imgrgb_path'])
 
     # change data root manually
     img_info['imgrgb_path'] = img_info['imgrgb_path'].replace('/home/siyuan/Documents/Dataset/SUNRGBD_ALL', config.data_root)
@@ -351,6 +360,7 @@ def readsunrgbdframe(config, image_name=None, image_id=None):
 
     # load segmentation
     img_info['seg2d'] = read_seg2d_data(img_info['seg2d_path'])
+    # print(img_info['seg2d_path'])
     # img_info['seg2d'] = None
 
     img_info['manhattan_layout'] = loadmat(os.path.join(sunrgbd_config.data_root, '3dlayout', str(image_id) + '.mat'))['manhattan_layout'].T

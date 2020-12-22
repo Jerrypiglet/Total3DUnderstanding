@@ -617,3 +617,4 @@ class Scene3D(object):
         render_window_interactor.SetRenderWindow(render_window)
         render_window.Render()
         render_window_interactor.Start()
+        input("[draw3D] Press [enter] to continue.")

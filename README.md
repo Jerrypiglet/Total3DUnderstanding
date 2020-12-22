@@ -12,6 +12,7 @@ In [CVPR, 2020](http://cvpr2020.thecvf.com/).
 
 - removed version requirements from requirements.txt
 - If seeing errors compiling chamfer distance module, try: export PATH=/usr/local/cuda/bin:/usr/local/cuda/nsight-compute-2019.4.0/${PATH:+:${PATH}}
+- pip intall -r requirements.txt --upgrade
 
 ### Install
 This implementation uses Python 3.6, [Pytorch1.1.0](http://pytorch.org/), cudatoolkit 9.0. We recommend to use [conda](https://docs.conda.io/en/latest/miniconda.html) to deploy the environment.

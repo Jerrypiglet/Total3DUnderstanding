@@ -1,3 +1,6 @@
 [submodule "external/chamfer_distance"]
 	path = external/chamfer_distance
 	url = https://github.com/otaheri/chamfer_distance.git
+[submodule "notebooks/ipympl"]
+	path = notebooks/ipympl
+	url = https://github.com/matplotlib/ipympl.git
