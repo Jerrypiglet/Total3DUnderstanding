@@ -40,21 +40,28 @@ class Scene3D_SUNRGBD(Scene3D):
         cam_R = cvt_R_ex_to_cam_R(sequence.R_ex)
 
         # define a world system
-        world_R = get_world_R(cam_R)
+        world_R = get_world_R(cam_R) # yaw-only
 
-        layout = process_layout(sequence.manhattan_layout)
+        layout, _ = process_layout(sequence.manhattan_layout) # [x1, x2, x3] -> [x2, x3, x1], just swapping axes
         centroid = layout['centroid']
         vectors = np.diag(layout['coeffs']).dot(layout['basis'])
         # Set all points relative to layout orientation. (i.e. let layout orientation to be the world system.)
         # The forward direction (x-axis) of layout orientation should point toward camera forward direction.
-        layout_3D = get_layout_info({'centroid': centroid, 'vectors': vectors}, cam_R[:, 0])
+        # print(layout['basis'])
 
-        self.__bdb2d = process_bdb2d(check_bdb2d(sequence.bdb2d, sequence.imgrgb.shape), sequence.imgrgb.shape)
+        layout_3D = get_layout_info({'centroid': centroid, 'vectors': vectors}, cam_R[:, 0])
+        # print(layout_3D['basis']) # same as previous...
+        assert np.max(np.abs(layout['basis'] - layout_3D['basis'])) < 1e-5
+        assert np.max(np.abs(layout['centroid'] - layout_3D['centroid'])) < 1e-5
+        assert np.max(np.abs(layout['coeffs'] - layout_3D['coeffs'])) < 1e-5
+
+        self.__bdb2d = process_bdb2d(check_bdb2d(sequence.bdb2d, sequence.imgrgb.shape), sequence.imgrgb.shape) # crop 2d bboxes to image sizes
 
         bdb3ds_ws = process_bdb3d(sequence.bdb3d)
 
         # transform everything to world system
         self.__layout, self.__bdb3d, self.__cam_R = transform_to_world(layout_3D, bdb3ds_ws, cam_R, world_R)
+        print(self.__layout['basis'])
 
         # self.__layout = get_campact_layout(self.layout, self.depth_map, self.cam_K, self.cam_R, self.bdb3d)
 
@@ -108,6 +115,8 @@ class Scene3D_SUNRGBD(Scene3D):
 
         width = 5
 
+        color_list = []
+
         for bdb3d in self.bdb3d:
             center_from_3D, invalid_ids = proj_from_point_to_2d(bdb3d['centroid'], self.cam_K, self.cam_R)
             bdb3d_corners = get_corners_of_bb3d_no_index(bdb3d['basis'], bdb3d['coeffs'], bdb3d['centroid'])
@@ -117,6 +126,7 @@ class Scene3D_SUNRGBD(Scene3D):
             bdb2D_from_3D = [tuple(item) for item in bdb2D_from_3D]
 
             color = nyu_color_palette[bdb3d['class_id']]
+            color_list.append(color)
 
             draw.line([bdb2D_from_3D[0], bdb2D_from_3D[1], bdb2D_from_3D[2], bdb2D_from_3D[3], bdb2D_from_3D[0]],
                       fill=(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)), width=width)
@@ -136,7 +146,7 @@ class Scene3D_SUNRGBD(Scene3D):
 
         if return_plt:
             print("[draw_projected_bdb3d] Returned.")
-            return img_map
+            return img_map, color_list
         else:
             img_map.show()
             print("[draw_projected_bdb3d] Shown.")

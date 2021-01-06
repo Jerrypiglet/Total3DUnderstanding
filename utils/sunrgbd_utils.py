@@ -83,7 +83,9 @@ def get_layout_info(layout_3D, cam_front):
     horizontal_dims = [0, 2]  # must be two dimensional. It means x and z axis are the horizontal axes.
     horizontal_id = 0         # we rotate the x-axis (horizontal_dims[horizontal_id]) toward cam front.
     frontal_basis = basis[0, : ]
+    # print(frontal_basis, cam_front)
     frontal_basis, horizontal_id = rotate_towards_cam_front(frontal_basis, cam_front, horizontal_id)
+    # print(frontal_basis, horizontal_id)
 
     up_basis = basis[1, : ]
     right_basis = np.cross(frontal_basis, up_basis)
@@ -245,6 +247,7 @@ class SUNRGBDData(object):
         
         # R_tilt is the right-hand camera coordinates  -> world coordinates transformation P_world = R_tilt*P_camera(after transformed to x, z, -y)
         self._R_tilt = R_tilt
+
         self._bdb2d = bdb2d
         self._bdb3d = bdb3d
         self._gt3dcorner = gt3dcorner
@@ -388,7 +391,7 @@ def readsunrgbdframe(config, image_name=None, image_id=None):
 
 def cvt_R_ex_to_cam_R(R_ex):
     '''
-    convert SUNRGBD camera R_ex matrix to transform objects from world system to camera system
+    convert SUNRGBD camera R_ex matrix to **transform objects from world system to camera system**
     both under the 'toward-up-right' system.
     :return: cam_R matrix
     '''
@@ -438,9 +441,10 @@ def process_layout(layout):
     '''
 
     trans_mat = np.array([[0., 1., 0.], [0., 0., 1.], [1., 0., 0.]])
-    layout_t = (trans_mat.dot(layout.T)).T
+    # layout_t = (trans_mat.dot(layout.T)).T # == layout @ trans_mat.T
+    layout_t = layout @ trans_mat.T # [x1, x2, x3] -> [x2, x3, x1], just swapping axes
     bdb = get_layout_bdb_from_corners(layout_t)
-    return bdb
+    return bdb, layout_t
 
 
 def check_bdb(bdb2d, m, n):
@@ -723,7 +727,7 @@ def process_bdb3d(bdb3ds):
     trans_mat = np.array([[0., 1., 0.], [0., 0., 1.], [1., 0., 0.]])
     bdb3ds_t = []
     for bdb3d in bdb3ds:
-        centroid = trans_mat.dot(bdb3d['centroid'][0])
+        centroid = trans_mat.dot(bdb3d['centroid'][0]) # [x1, x2, x3] -> [x2, x3, x1], just swapping axes
         coeffs = bdb3d['coeffs'][0]
         basis = bdb3d['basis'].astype('float32')
         vectors = trans_mat.dot((trans_mat.dot((np.diag(coeffs).dot(basis)).T)).T)
@@ -757,7 +761,7 @@ def transform_to_world(layout, bdb3ds, cam_R, world_R):
     new_layout['centroid'] = layout['centroid'].dot(world_R)  # layout centroid in world system
     new_layout['basis'] = layout['basis'].dot(world_R)  # layout vectors in world system
 
-    new_cam_R = (world_R.T).dot(cam_R)
+    new_cam_R = (world_R.T).dot(cam_R) # offseting the yaw component in cam_R with world_R; now new_cam_R is yaw_free
 
     new_bdb3ds = []
     for bdb3d in bdb3ds:

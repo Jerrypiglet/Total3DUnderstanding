@@ -31,3 +31,39 @@ def clip(subjectPolygon, clipPolygon):
          s = e
       cp1 = cp2
    return(outputList)
+
+# https://stackoverflow.com/questions/11140163/plotting-a-3d-cube-a-sphere-and-a-vector-in-matplotlib
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
+import numpy as np
+
+def vis_cube_plt(Xs, ax, color=None):
+    index1 = [0, 1, 2, 3, 0, 4, 5, 6, 7, 4]
+    index2 = [[1, 5], [2, 6], [3, 7]]
+#     ax.scatter3D(Xs[:, 0], Xs[:, 1], Xs[:, 2])
+    if color is None:
+        color = list(np.random.choice(range(256), size=3) / 255.)
+        print(color)
+    ax.plot3D(Xs[index1, 0], Xs[index1, 1], Xs[index1, 2], color=color)
+    for index in index2:
+        ax.plot3D(Xs[index, 0], Xs[index, 1], Xs[index, 2], color=color)
+
+from matplotlib.patches import FancyArrowPatch
+from mpl_toolkits.mplot3d import proj3d
+class Arrow3D(FancyArrowPatch):
+    def __init__(self, xs, ys, zs, *args, **kwargs):
+        FancyArrowPatch.__init__(self, (0, 0), (0, 0), *args, **kwargs)
+        self._verts3d = xs, ys, zs
+
+    def draw(self, renderer):
+        xs3d, ys3d, zs3d = self._verts3d
+        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
+        self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
+        FancyArrowPatch.draw(self, renderer)
+        
+def vis_axis(ax):
+    for vec, tag, tag_loc in zip([([0, 1], [0, 0], [0, 0]), ([0, 0], [0, 1], [0, 0]), ([0, 0], [0, 0], [0, 1])], [r'$X_w$', r'$Y_w$', r'$Z_w$'], [[1, 0, 0], [0, 1, 0], [0, 0, 1]]):
+        a = Arrow3D(vec[0], vec[1], vec[2], mutation_scale=20,
+                lw=1, arrowstyle="->", color="k")
+        ax.text3D(tag_loc[0], tag_loc[1], tag_loc[2], tag)
+        ax.add_artist(a)

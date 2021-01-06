@@ -282,17 +282,21 @@ def get_world_R(cam_R):
     '''
     set a world system from camera matrix
     :param cam_R:
-    :return:
+    :return world_R:
     '''
     toward_vec = deepcopy(cam_R[:,0])
     toward_vec[1] = 0.
-    toward_vec = normalize_point(toward_vec)
+    # print(toward_vec)
+    toward_vec = normalize_point(toward_vec) # toward vector in x-o-z plane (horizontal ground plane)
     up_vec = np.array([0., 1., 0.])
     right_vec = np.cross(toward_vec, up_vec)
 
-    world_R = np.vstack([toward_vec, up_vec, right_vec]).T
-    # yaw, _, _ = yaw_pitch_roll_from_R(cam_R)
-    # world_R = R_from_yaw_pitch_roll(yaw, 0., 0.)
+    world_R = np.vstack([toward_vec, up_vec, right_vec]).T # formulate a new transformation matrix from world to a new x'-y-z' where x' has no component in y; in otherwords a **yaw-only transformation**; better illustrated as the equivalant equation below
+    yaw, _, _ = yaw_pitch_roll_from_R(cam_R) # usually very small: a few degrees
+    # print('---yaw in degrees:', yaw/np.pi*180.)
+    world_R_ = R_from_yaw_pitch_roll(yaw, 0., 0.)
+    # print('---', world_R, world_R_)
+    assert np.max(np.abs(world_R - world_R_)) < 1e-5
 
     return world_R
 
