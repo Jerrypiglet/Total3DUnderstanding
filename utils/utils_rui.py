@@ -67,3 +67,12 @@ def vis_axis(ax):
                 lw=1, arrowstyle="->", color="k")
         ax.text3D(tag_loc[0], tag_loc[1], tag_loc[2], tag)
         ax.add_artist(a)
+
+def vis_axis_xyz(ax, x, y, z, origin=[0., 0., 0.], suffix='_w'):
+    for vec, tag, tag_loc in zip([([origin[0], (origin+x)[0]], [origin[1], (origin+x)[1]], [origin[2], (origin+x)[2]]), \
+       ([origin[0], (origin+y)[0]], [origin[1], (origin+y)[1]], [origin[2], (origin+y)[2]]), \
+          ([origin[0], (origin+z)[0]], [origin[1], (origin+z)[1]], [origin[2], (origin+z)[2]])], [r'$X%s$'%suffix, r'$Y%s$'%suffix, r'$Z%s$'%suffix], [origin+x, origin+y, origin+z]):
+        a = Arrow3D(vec[0], vec[1], vec[2], mutation_scale=20,
+                lw=1, arrowstyle="->", color="k")
+        ax.text3D(tag_loc[0], tag_loc[1], tag_loc[2], tag)
+        ax.add_artist(a)

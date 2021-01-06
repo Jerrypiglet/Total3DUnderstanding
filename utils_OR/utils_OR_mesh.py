@@ -2,7 +2,7 @@ import trimesh
 import numpy as np
 
 def load_OR_mesh(layout_obj_file):
-    mesh = trimesh.load_mesh(str(layout_obj_file), force='mesh', skip_texture=True)
+    mesh = trimesh.load_mesh(str(layout_obj_file))
     mesh = as_mesh(mesh)
     return mesh
 
@@ -21,7 +21,7 @@ def as_mesh(scene_or_mesh):
                 tuple(trimesh.Trimesh(vertices=g.vertices, faces=g.faces)
                     for g in scene_or_mesh.geometry.values()))
     else:
-        assert(isinstance(mesh, trimesh.Trimesh))
+        assert(isinstance(scene_or_mesh, trimesh.Trimesh))
         mesh = scene_or_mesh
     return mesh
 
@@ -80,3 +80,25 @@ def v_pairs_from_v3d_e(v, e):
 def v_pairs_from_v2d_e(v, e):
     v_pairs = [(np.array([v[e0[0]][0], v[e0[1]][0]]), np.array([v[e0[0]][1], v[e0[1]][1]])) for e0 in e]
     return v_pairs
+
+def v_xytuple_from_v2d_e(v, e):
+    v_pairs = [(v[e0[0]], v[e0[1]]) for e0 in e]
+    return v_pairs
+
+def transform_v(vertices, transforms):
+    assert transforms[0][0]=='s' and transforms[1][0]=='rot' and transforms[2][0]=='t'
+    # following computeTransform()
+    assert len(vertices.shape)==2
+    assert vertices.shape[1]==3
+
+    s = transforms[0][1]
+    scale = np.array(s, dtype=np.float32 ).reshape(1, 3)
+    vertices = vertices * scale
+    rotMat = s = transforms[1][1]
+    vertices = np.matmul(rotMat, vertices.transpose() )
+    vertices = vertices.transpose()
+    t = s = transforms[2][1]
+    trans = np.array(t, dtype=np.float32 ).reshape(1, 3)
+    vertices = vertices + trans
+    
+    return vertices

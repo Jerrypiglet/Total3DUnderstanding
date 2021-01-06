@@ -110,6 +110,8 @@ class Scene3D_SUNRGBD(Scene3D):
         from PIL import Image, ImageDraw, ImageFont
 
         img_map = Image.fromarray(self.img_map[:])
+        print(self.img_map[:].shape)
+
 
         draw = ImageDraw.Draw(img_map)
 
