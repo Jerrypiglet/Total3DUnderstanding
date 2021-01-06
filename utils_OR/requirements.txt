@@ -1,0 +1,5 @@
+numba
+numpy-quaternion
+open3d
+scikit-image
+trimesh

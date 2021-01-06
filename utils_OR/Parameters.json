@@ -1,0 +1,17 @@
+{
+	"scannet" : "../../Assets/scannet-sample/",
+    "scan2cad": "/newfoundland/zhl/Scan2cad/full_annotations.json",
+	"shapenet" : "../../../../../uv_mapped/", 
+    "shapenetAbs" : "/newfoundland2/ruizhu/siggraphasia20dataset/uv_mapped/", 
+    "scannet_layout": "../../../../../layoutMesh/", 
+    "scannet_layoutAbs": "/newfoundland2/ruizhu/siggraphasia20dataset/layoutMesh/", 
+    "adobestock": "../../../../../BRDFOriginDataset", 
+    "adobestockAbs": "/siggraphasia20dataset/BRDFOriginDataset/", 
+    "envmap": "../../../../../EnvDataset",  
+    "scannet_camAbs": "/viscompfs/users/sawang/ScanNet/data/scans/", 
+    "envmapAbs": "/siggraphasia20dataset/EnvDataset/", 
+	"scannet_voxelized" : "../../Assets/scannet-voxelized-sdf-sample/",
+	"shapenet_voxelized" : "../../Assets/shapenet-voxelized-df-sample/",
+	"centers" : "../../Assets/training-data/scan-centers-sample/",
+	"heatmaps" : "../../Assets/training-data/CAD-heatmaps-sample/"
+}
