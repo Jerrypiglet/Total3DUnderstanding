@@ -37,16 +37,16 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import numpy as np
 
-def vis_cube_plt(Xs, ax, color=None):
+def vis_cube_plt(Xs, ax, color=None, linestyle='-'):
     index1 = [0, 1, 2, 3, 0, 4, 5, 6, 7, 4]
     index2 = [[1, 5], [2, 6], [3, 7]]
 #     ax.scatter3D(Xs[:, 0], Xs[:, 1], Xs[:, 2])
     if color is None:
         color = list(np.random.choice(range(256), size=3) / 255.)
         print(color)
-    ax.plot3D(Xs[index1, 0], Xs[index1, 1], Xs[index1, 2], color=color)
+    ax.plot3D(Xs[index1, 0], Xs[index1, 1], Xs[index1, 2], color=color, linestyle=linestyle)
     for index in index2:
-        ax.plot3D(Xs[index, 0], Xs[index, 1], Xs[index, 2], color=color)
+        ax.plot3D(Xs[index, 0], Xs[index, 1], Xs[index, 2], color=color, linestyle=linestyle)
 
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d

@@ -2,6 +2,7 @@ import os.path as osp
 import cv2
 import numpy as np
 import trimesh
+from PIL import Image, ImageDraw, ImageFont
 
 def loadHdr(imName, if_resize=False, imWidth=None, imHeight=None, if_channel_first=False):
     if not(osp.isfile(imName ) ):
@@ -27,49 +28,49 @@ def in_frame(p, width, height):
     else:
         return False
 
-def draw_projected_bdb3d(im, v, e, cam_K, if_save = True, save_path=''):
-        from PIL import Image, ImageDraw, ImageFont
+# from utils.utils_rui import clip
+# def clip2rec(polygon, W, H, line_width=5):
+#     # if not fix_polygon:
+#     #     return polygon
+#     if all_outside_rect(polygon, W, H):
+#         return []
+#     rectangle = [(-line_width, -line_width), (W+line_width, -line_width), (W+line_width, H+line_width), (-line_width, H+line_width)]
+#     return clip(polygon, rectangle)
 
-        img_map = Image.fromarray(self.img_map[:])
+# def all_outside_rect(polygon, W, H):
+#     if all([x[0] < 0 or x[0] >= W or x[1] < 0 or x[1] >= H for x in polygon]):
+#         return True
+#     else:
+#         return False
 
-        draw = ImageDraw.Draw(img_map)
+def draw_lines_notalloutside_image(draw, v_list, idx_list, front_flags, color=(255, 255, 255), width=5):
+    assert len(v_list) == len(front_flags)
+    for i in range(len(idx_list)-1):
+        if front_flags[idx_list[i]] and front_flags[idx_list[i+1]]:
+            draw.line([v_list[idx_list[i]], v_list[idx_list[i+1]]], width=width, fill=color)
 
-        width = 5
+def draw_projected_bdb3d(draw, bdb2D_from_3D, front_flags=None, color=(255, 255, 255), width=5):
+    bdb2D_from_3D = [tuple(item) for item in bdb2D_from_3D]
+    if front_flags is None:
+        front_flags = [True] * len(bdb2D_from_3D)
+    assert len(front_flags) == len(bdb2D_from_3D)
 
-        if type == 'prediction':
-            boxes = self.pre_boxes
-            cam_R = self.pre_cam_R
-        else:
-            boxes = self.gt_boxes
-            cam_R = self.gt_cam_R
+    for idx_list in [[0, 1, 2, 3, 0], [4, 5, 6, 7, 4], [0, 4], [1, 5], [2, 6], [3, 7]]:
+        draw_lines_notalloutside_image(draw, bdb2D_from_3D, idx_list, front_flags, color=color, width=width)
 
-        for coeffs, centroid, class_id, basis in zip(boxes['coeffs'], boxes['centroid'], boxes['class_id'], boxes['basis']):
-            if class_id not in RECON_3D_CLS:
-                continue
-            center_from_3D, invalid_ids = proj_from_point_to_2d(centroid, self.cam_K, cam_R)
-            bdb3d_corners = get_corners_of_bb3d_no_index(basis, coeffs, centroid)
-            bdb2D_from_3D = proj_from_point_to_2d(bdb3d_corners, self.cam_K, cam_R)[0]
+    # W, H = img_map.size
 
-            # bdb2D_from_3D = np.round(bdb2D_from_3D).astype('int32')
-            bdb2D_from_3D = [tuple(item) for item in bdb2D_from_3D]
+    # print(clip2rec([bdb2D_from_3D[0], bdb2D_from_3D[1], bdb2D_from_3D[2], bdb2D_from_3D[3], bdb2D_from_3D[0]], W=W, H=H, line_width=width))
 
-            color = nyu_color_palette[class_id]
-
-            draw.line([bdb2D_from_3D[0], bdb2D_from_3D[1], bdb2D_from_3D[2], bdb2D_from_3D[3], bdb2D_from_3D[0]],
-                      fill=(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)), width=width)
-            draw.line([bdb2D_from_3D[4], bdb2D_from_3D[5], bdb2D_from_3D[6], bdb2D_from_3D[7], bdb2D_from_3D[4]],
-                      fill=(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)), width=width)
-            draw.line([bdb2D_from_3D[0], bdb2D_from_3D[4]],
-                      fill=(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)), width=width)
-            draw.line([bdb2D_from_3D[1], bdb2D_from_3D[5]],
-                      fill=(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)), width=width)
-            draw.line([bdb2D_from_3D[2], bdb2D_from_3D[6]],
-                      fill=(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)), width=width)
-            draw.line([bdb2D_from_3D[3], bdb2D_from_3D[7]],
-                      fill=(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)), width=width)
-
-            draw.text(tuple(center_from_3D), NYU40CLASSES[class_id],
-                      fill=(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)), font=ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf", 20))
-
-        img_map.show()
-
+    # draw.line(clip2rec([bdb2D_from_3D[0], bdb2D_from_3D[1], bdb2D_from_3D[2], bdb2D_from_3D[3], bdb2D_from_3D[0]], W=W, H=H, line_width=width),
+    #     fill=color, width=width)
+    # draw.line(clip2rec([bdb2D_from_3D[4], bdb2D_from_3D[5], bdb2D_from_3D[6], bdb2D_from_3D[7], bdb2D_from_3D[4]], W=W, H=H, line_width=width),
+    #     fill=color, width=width)
+    # draw.line(clip2rec([bdb2D_from_3D[0], bdb2D_from_3D[4]], W=W, H=H, line_width=width),
+    #     fill=color, width=width)
+    # draw.line(clip2rec([bdb2D_from_3D[1], bdb2D_from_3D[5]], W=W, H=H, line_width=width),
+    #     fill=color, width=width)
+    # draw.line(clip2rec([bdb2D_from_3D[2], bdb2D_from_3D[6]], W=W, H=H, line_width=width),
+    #     fill=color, width=width)
+    # draw.line(clip2rec([bdb2D_from_3D[3], bdb2D_from_3D[7]], W=W, H=H, line_width=width),
+    #     fill=color, width=width)
