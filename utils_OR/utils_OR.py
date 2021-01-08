@@ -3,8 +3,31 @@ import cv2
 import numpy as np
 import trimesh
 from PIL import Image, ImageDraw, ImageFont
+import os.path as osp
+
+def loadImage(imName, isGama = False):
+    imName = str(imName)
+    if not(osp.isfile(imName ) ):
+        print(imName )
+        assert(False )
+
+    im = Image.open(imName)
+    # im = im.resize([self.imWidth, self.imHeight], Image.ANTIALIAS )
+
+    im = np.asarray(im, dtype=np.float32)
+    if isGama:
+        im = (im / 255.0) ** 2.2
+        im = 2 * im - 1
+    else:
+        im = (im - 127.5) / 127.5
+    if len(im.shape) == 2:
+        im = im[:, np.newaxis]
+    im = np.transpose(im, [2, 0, 1] )
+
+    return im
 
 def loadHdr(imName, if_resize=False, imWidth=None, imHeight=None, if_channel_first=False):
+    imName = str(imName)
     if not(osp.isfile(imName ) ):
         print(imName )
         assert(False )
@@ -21,6 +44,15 @@ def loadHdr(imName, if_resize=False, imWidth=None, imHeight=None, if_channel_fir
     if if_channel_first:
         im = np.transpose(im, [2, 0, 1])
     return im
+
+def scaleHdr(hdr, seg):
+    imHeight, imWidth = hdr.shape[:2]
+    intensityArr = (hdr * seg).flatten()
+    intensityArr.sort()
+    scale = (0.95 - 0.05)  / np.clip(intensityArr[int(0.95 * imWidth * imHeight * 3) ], 0.1, None)
+    hdr = scale * hdr
+    return np.clip(hdr, 0, 1), scale 
+
 
 def in_frame(p, width, height):
     if p[0]>0 and p[0]<width and p[1]>0 and p[1]<height:
